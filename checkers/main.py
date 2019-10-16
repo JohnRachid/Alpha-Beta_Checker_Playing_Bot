@@ -1,9 +1,10 @@
 from checkers.game import Game
 import numpy as np
 import copy
-from anytree import Node, RenderTree,AnyNode
+from anytree import Node, RenderTree, AnyNode
 
-max_depth = 5
+max_depth = 10
+
 
 def main():
     game = Game()
@@ -17,7 +18,8 @@ def main():
 
 def human_move(game):
     print("Possible moves for human ", game.get_possible_moves())
-    move_number = int(input("insert move number from list (EX 0)"))
+    prompt ="insert move number from list 0 - " + str(len(game.get_possible_moves())-1)
+    move_number = int(input(prompt))
 
     print("player moved to ", game.get_possible_moves()[move_number])
     game.move(game.get_possible_moves()[move_number])
@@ -26,44 +28,42 @@ def human_move(game):
 def bot_move(game):
     print("Possible moves for bot ", game.get_possible_moves())
     print("bot moved to ", game.get_possible_moves()[0])
-    alpha_beta_main(game)
-    game.move(game.get_possible_moves()[0])
+    _,best_move = alphabeta(game, max_depth, float("-inf"), float("inf"), True, "")
+    game.move(best_move)
 
-def alpha_beta_main(game):
-    root = AnyNode(game)
-    construct_tree(root,0)
 
-def construct_tree(parent,current_depth):
-    if current_depth >= max_depth or parent.is_over():
-        return
-    
-    current_depth = current_depth + 1
-    for i in range(0, len(parent.get_possible_moves())):
-        new_game = copy.deepcopy(parent)
-        new_game.move(parent.get_possible_moves()[i])
-        new_parent = AnyNode(new_game, parent=parent)
-        construct_tree(new_parent,current_depth)
-
-def alphabeta(node, depth, alpha, beta, maximizingPlayer): #used the psudocode provided at: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
+def alphabeta(node, depth, alpha, beta, maximizingPlayer,
+              best_move):  # used the psudocode provided at: https://en.wikipedia.org/wiki/Alpha%E2%80%93beta_pruning
     # possible_scores
     if depth == 0 or node.is_over():
         return get_game_score(node)
     if maximizingPlayer:
         value = float("inf")
-        for child in node.children:
-            value = max(value, alphabeta(child,depth-1,alpha,beta,False))
-            alpha = max(alpha,value)
+        for i in range(0, len(node.get_possible_moves())):
+            new_game = copy.deepcopy(node)
+            new_game.move(node.get_possible_moves()[i])
+            new_value,best_move = alphabeta(new_game, depth - 1, alpha, beta, False,best_move)
+
+            value = max(value, new_value)
+            if get_game_score(new_game) < value:
+                best_move = node.get_possible_moves()[i]
+                print(best_move)
+            alpha = max(alpha, value)
             if alpha >= beta:
                 break
-        return value
+        return value, best_move
     else:
         value = float("-inf")
-        for child in node.children:
-            value = min(value,alphabeta(child,depth-1,alpha,beta,True))
-            beta = min(beta,value)
+        for i in range(0, len(node.get_possible_moves())):
+            new_game = copy.deepcopy(node)
+            new_game.move(node.get_possible_moves()[i])
+            new_value,best_move = alphabeta(new_game, depth - 1, alpha, beta, True,best_move)
+            value = min(value, new_value)#need to do the same as above here
+            beta = min(beta, value)
             if alpha >= beta:
                 break
-        return value
+        return value, best_move
+
 
 def get_game_score(game):
     total_score = 0
@@ -74,6 +74,7 @@ def get_game_score(game):
             if not piece.king:
                 total_score = total_score + 5
     return total_score
+
 
 def print_game_to_console(game):
     game_state = np.chararray((8, 8), unicode=True)
@@ -92,7 +93,7 @@ def print_game_to_console(game):
                 else:
                     game_state[piece.get_row()][piece.get_column() * 2] = king_symbol
             else:
-                print(piece.get_adjacent_positions(), "", piece.get_row(), piece.get_column())
+                # print(piece.get_adjacent_positions(), "", piece.get_row(), piece.get_column())
                 if piece.get_row() % 2 == 0:
                     game_state[piece.get_row()][piece.get_column() * 2 + 1] = checker_symbol
                 else:
