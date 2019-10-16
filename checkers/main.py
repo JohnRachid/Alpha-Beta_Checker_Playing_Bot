@@ -2,17 +2,19 @@ from checkers.game import Game
 import numpy as np
 import copy
 from anytree import Node, RenderTree, AnyNode
+import operator
 
 max_depth = 5
 
 
 def main():
     game = Game()
+    game.consecutive_noncapture_move_limit = 100
     while (not game.is_over()):
         if game.whose_turn() == 1:
-            human_move(game)
+            bot_move(game,1) #if you want the bot to play for the human replace this line with bot_move(game,desired_depth)
         else:
-            bot_move(game)
+            bot_move(game,5)
         print_game_to_console(game)
 
 
@@ -25,14 +27,21 @@ def human_move(game):
     game.move(game.get_possible_moves()[move_number])
 
 
-def bot_move(game):
+def bot_move(game,depth):
     print("Possible moves for bot ", game.get_possible_moves())
+    first_moves = []
 
-    val,best_move = alphabeta(game, max_depth, float("-inf"), float("inf"), True,game.get_possible_moves()[0])
-    print(val)
-    print("bot moved to ", best_move)
-    print(val)
-    game.move(best_move)
+    for i in range(0, len(game.get_possible_moves())):
+        new_game = copy.deepcopy(game)
+        new_game.move(game.get_possible_moves()[i])
+        val,best_move = alphabeta(new_game, depth, float("-inf"), float("inf"), True,game.get_possible_moves()[0])
+        print(val)
+        first_moves.append(val)
+    index, value = max(enumerate(first_moves), key=operator.itemgetter(1))
+    print("bot moved to ", game.get_possible_moves()[index])
+
+    # print(val)
+    game.move(game.get_possible_moves()[index])
 
 
 def alphabeta(node, depth, alpha, beta, maximizingPlayer,
@@ -50,7 +59,7 @@ def alphabeta(node, depth, alpha, beta, maximizingPlayer,
             value = max(value, new_value)
             if get_game_score(new_game) > value:
                 best_move = node.get_possible_moves()[i]
-                print(best_move, value)
+                # print(best_move, value)
             alpha = max(alpha, value)
             if alpha >= beta:
                 break
@@ -74,6 +83,10 @@ def alphabeta(node, depth, alpha, beta, maximizingPlayer,
 def get_game_score(game):
     player_num = game.whose_turn()
     total_score = 0
+    if game.get_winner() == player_num:
+        total_score = total_score + 500
+    else:
+        total_score = total_score - 500
     for piece in game.board.pieces:
         if not piece.captured:
             if piece.king and piece.player == player_num:
