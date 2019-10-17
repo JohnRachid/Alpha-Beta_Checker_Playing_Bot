@@ -58,16 +58,16 @@ class Piece:
 
 		return self.board.position_layout.get(row_behind_enemy, {}).get(column_behind_enemy)
 
-	def get_possible_positional_moves(self):
-		if self.possible_positional_moves == None:
+	def get_possible_positional_moves(self):#adapted from the old code at https://github.com/ImparaAI/checkers
+		if self.possible_positional_moves is None:
 			self.possible_positional_moves = self.build_possible_positional_moves()
 
 		return self.possible_positional_moves
 
-	def build_possible_positional_moves(self):
+	def build_possible_positional_moves(self):#adapted from the old code at https://github.com/ImparaAI/checkers
 		new_positions = list(filter((lambda position: self.board.position_is_open(position)), self.get_adjacent_positions()))
-
-		return self.create_moves_from_new_positions(new_positions)
+		built_moves =self.create_moves_from_new_positions(new_positions)
+		return built_moves
 
 	def create_moves_from_new_positions(self, new_positions):
 		return [[self.position, new_position] for new_position in new_positions]

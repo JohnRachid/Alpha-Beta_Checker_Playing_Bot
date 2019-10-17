@@ -1,10 +1,10 @@
 from checkers.game import Game
 import numpy as np
 import copy
-from anytree import Node, RenderTree, AnyNode
 import operator
+import random
 
-max_depth = 5
+max_depth = 7
 
 
 def main():
@@ -12,7 +12,8 @@ def main():
     game.consecutive_noncapture_move_limit = 100
     while (not game.is_over()):
         if game.whose_turn() == 1:
-            bot_move(game,1) #if you want the bot to play for the human replace this line with bot_move(game,desired_depth)
+            human_move(game) #if you want the bot to play for the human replace this line with bot_move(game,desired_depth)
+            # bot_move(game, 1)
         else:
             bot_move(game,5)
         print_game_to_console(game)
@@ -22,6 +23,9 @@ def human_move(game):
     print("Possible moves for human ", game.get_possible_moves())
     prompt ="insert move number from list 0 - " + str(len(game.get_possible_moves())-1)
     move_number = int(input(prompt))
+    if move_number >= len(game.get_possible_moves()):
+        print("number out of bounds please provide a number within 0 - ", len(game.get_possible_moves())-1)
+        move_number = int(input(prompt))
 
     print("player moved to ", game.get_possible_moves()[move_number])
     game.move(game.get_possible_moves()[move_number])
@@ -35,10 +39,11 @@ def bot_move(game,depth):
         new_game = copy.deepcopy(game)
         new_game.move(game.get_possible_moves()[i])
         val,best_move = alphabeta(new_game, depth, float("-inf"), float("inf"), True,game.get_possible_moves()[0])
-        print(val)
+        # print(val)
         first_moves.append(val)
     index, value = max(enumerate(first_moves), key=operator.itemgetter(1))
-    print("bot moved to ", game.get_possible_moves()[index])
+    duplicates = [i for i, x in enumerate(first_moves) if x == value]#isint python just the best?
+    print("bot moved to ", game.get_possible_moves()[random.choice(duplicates)])#picks randomly between the elements with the highest values
 
     # print(val)
     game.move(game.get_possible_moves()[index])
@@ -89,6 +94,8 @@ def get_game_score(game):
         total_score = total_score - 500
     for piece in game.board.pieces:
         if not piece.captured:
+            if len(piece.get_possible_capture_moves()) > 1:
+                total_score = total_score + 20
             if piece.king and piece.player == player_num:
                 total_score = total_score + 20
             elif piece.king:
