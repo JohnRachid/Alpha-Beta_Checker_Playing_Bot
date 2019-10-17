@@ -85,7 +85,7 @@ def get_game_score(game):
     total_score = 0
     if game.get_winner() == player_num:
         total_score = total_score + 500
-    else:
+    elif game.is_over():
         total_score = total_score - 500
     for piece in game.board.pieces:
         if not piece.captured:
