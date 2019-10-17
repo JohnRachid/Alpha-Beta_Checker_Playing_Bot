@@ -4,9 +4,6 @@ import copy
 import operator
 import random
 
-max_depth = 7
-
-
 def main():
     game = Game()
     game.consecutive_noncapture_move_limit = 100
